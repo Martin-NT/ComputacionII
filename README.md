@@ -1,9 +1,9 @@
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
-**Nombre:** Martin Navarro
-**Correo:** martinnavarro1503@gmail.com
-**Correo Institucional:** mt.navarro@alumno.um.edu.ar
+-**Nombre:** Martin Navarro
+-**Correo:** martinnavarro1503@gmail.com
+-**Correo Institucional:** mt.navarro@alumno.um.edu.ar
 
 ## Expectativas sobre la materia  
 Espero aprender a utilizar herramientas de control de versiones como Git, mejorar mis habilidades en programación y comprender mejor la administración de sistemas Unix/Linux.  
