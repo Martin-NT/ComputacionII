@@ -5,15 +5,12 @@
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
-<<<<<<< HEAD
+
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
 - **Nombre:** Martin Navarro
 - **Legajo:** 62181
-=======
-- **Nombre:** Martin Navarro
->>>>>>> a727b8bafb7fc982fee311d25ebaa0cb9610455c
 - **Correo:** martinnavarro1503@gmail.com
 - **Correo Institucional:** mt.navarro@alumno.um.edu.ar
 
