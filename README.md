@@ -1,9 +1,17 @@
+<p align="center">
+  <img src="images/um_logo.png" alt="Universidad de Mendoza" />
+</p>
+
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
-**Nombre:** Martin Navarro
-**Correo:** martinnavarro1503@gmail.com
-**Correo Institucional:** mt.navarro@alumno.um.edu.ar
+# Computación II - Ingeniería Informática  
+
+## Información Personal  
+- **Nombre:** Martin Navarro
+- **Legajo:** 62181
+- **Correo:** martinnavarro1503@gmail.com
+- **Correo Institucional:** mt.navarro@alumno.um.edu.ar
 
 ## Expectativas sobre la materia  
 Espero aprender a utilizar herramientas de control de versiones como Git, mejorar mis habilidades en programación y comprender mejor la administración de sistemas Unix/Linux.  
@@ -16,4 +24,5 @@ Espero aprender a utilizar herramientas de control de versiones como Git, mejora
 ## Hobbies  
 - Aprender sobre nuevas tecnologías
 - Ver peliculas y series
+
 
