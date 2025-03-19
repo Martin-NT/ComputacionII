@@ -1,7 +1,19 @@
+<p align="center">
+  <img src="images/um_logo.png" alt="Universidad de Mendoza" />
+</p>
+
+# Computación II - Ingeniería Informática  
+
+## Información Personal  
+<<<<<<< HEAD
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
 - **Nombre:** Martin Navarro
+- **Legajo:** 62181
+=======
+- **Nombre:** Martin Navarro
+>>>>>>> a727b8bafb7fc982fee311d25ebaa0cb9610455c
 - **Correo:** martinnavarro1503@gmail.com
 - **Correo Institucional:** mt.navarro@alumno.um.edu.ar
 
@@ -16,4 +28,5 @@ Espero aprender a utilizar herramientas de control de versiones como Git, mejora
 ## Hobbies  
 - Aprender sobre nuevas tecnologías
 - Ver peliculas y series
+
 
