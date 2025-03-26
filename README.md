@@ -5,10 +5,6 @@
 # Computación II - Ingeniería Informática  
 
 ## Información Personal  
-
-# Computación II - Ingeniería Informática  
-
-## Información Personal  
 - **Nombre:** Martin Navarro
 - **Legajo:** 62181
 - **Correo:** martinnavarro1503@gmail.com
