@@ -1,4 +1,5 @@
-#📌 Objetivo: Crear tres procesos hijos desde un mismo padre. Cada uno imprimirá su PID y luego terminará.
+#📌 Objetivo: Crear tres procesos hijos desde un mismo padre. Cada uno imprimirá su PID 
+# y luego terminará.
 
 import os
 
