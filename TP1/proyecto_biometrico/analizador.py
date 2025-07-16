@@ -1,24 +1,43 @@
-import numpy as np 
+import numpy as np
 
-def analizador(tipo, conn):
-    ventana = []
-    while True:
-        try:
-            dato = conn.recv()
-        except EOFError:
-            break  # El pipe fue cerrado
-
-        if tipo != "presion":
-            valor = dato[tipo]
-        else:
-            valor = dato["presion"][0]  # presión sistólica
-
-        ventana.append(valor)
-        if len(ventana) > 30:
-            ventana.pop(0)
+def analizador(tipo, conn, verificador_conn):
+    valores_obtenidos = []
+    try:
+        while True:
+            try:
+                dato = conn.recv()
+            except EOFError:
+                print(f"[{tipo.upper()}] Pipe cerrado. Cerrando analizador.")
+                break  # Salir si el pipe se cerró
             
-        ventana_array = np.array(ventana)
-        media = np.mean(ventana_array)
-        desviacion = np.std(ventana_array)
+            timestamp = dato["timestamp"]
+            if tipo != "presion":
+                valor = dato[tipo]
+            else:
+                valor = dato["presion"][0]  # presión sistólica
 
-        print(f"[{tipo.upper()}] Valor: {valor} | Media: {media:.2f} | Desviación estándar: {desviacion:.2f}")
+            valores_obtenidos.append(valor)
+            if len(valores_obtenidos) > 30:
+                valores_obtenidos.pop(0)
+
+            valores_obtenidos_array = np.array(valores_obtenidos)
+            media = np.mean(valores_obtenidos_array)
+            desviacion = np.std(valores_obtenidos_array)
+            
+            print(f"[{tipo.upper()}] Valores Obtenidos: {valores_obtenidos}")
+            print(f"[{tipo.upper()}] Valor: {valor} | Media: {media:.2f} | Desviación estándar: {desviacion:.2f}")
+
+            resultado = {
+                "tipo": tipo,
+                "timestamp": timestamp,
+                "media": media,
+                "desv": desviacion
+            }
+            verificador_conn.send(resultado)
+
+    except KeyboardInterrupt:
+        print(f"[{tipo.upper()}] Analizador interrumpido. Cerrando proceso.")
+
+    finally:
+        conn.close()
+        verificador_conn.close()
