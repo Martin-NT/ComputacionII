@@ -1,21 +1,23 @@
 import multiprocessing
 import time
-from generador import generar_dato
-from analizador import analizador
-from verificador import verificador
+from generador import GeneradorBiometrico
+from analizador import ejecutar_analizador
+from verificador import Verificador
 
 def main():
+    generador = GeneradorBiometrico()
+
     padre_a, hijo_a = multiprocessing.Pipe()
     padre_b, hijo_b = multiprocessing.Pipe()
     padre_c, hijo_c = multiprocessing.Pipe()
 
     verificador_padre, verificador_hijo = multiprocessing.Pipe()
 
-    proceso_a = multiprocessing.Process(target=analizador, args=("frecuencia", hijo_a, verificador_padre))
-    proceso_b = multiprocessing.Process(target=analizador, args=("presion", hijo_b, verificador_padre))
-    proceso_c = multiprocessing.Process(target=analizador, args=("oxigeno", hijo_c, verificador_padre))
+    proceso_a = multiprocessing.Process(target = ejecutar_analizador, args=("frecuencia", hijo_a, verificador_padre))
+    proceso_b = multiprocessing.Process(target = ejecutar_analizador, args=("presion", hijo_b, verificador_padre))
+    proceso_c = multiprocessing.Process(target = ejecutar_analizador, args=("oxigeno", hijo_c, verificador_padre))
 
-    proceso_verificador = multiprocessing.Process(target=verificador, args=(verificador_hijo,))
+    proceso_verificador = multiprocessing.Process(target=Verificador(verificador_hijo).verificar)
 
     proceso_a.start()
     proceso_b.start()
@@ -29,7 +31,7 @@ def main():
 
     try:
         for _ in range(60):
-            dato = generar_dato()
+            dato = generador.generar_dato()
             padre_a.send(dato)
             padre_b.send(dato)
             padre_c.send(dato)
