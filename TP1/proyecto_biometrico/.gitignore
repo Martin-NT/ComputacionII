@@ -1,9 +1,6 @@
 venv/
 __pycache__/
 *.pyc
-<<<<<<< HEAD
 blockchain.json
 reporte.txt
-=======
->>>>>>> main
 
