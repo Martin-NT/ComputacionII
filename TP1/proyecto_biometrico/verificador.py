@@ -1,5 +1,6 @@
 import hashlib
 import json
+from utils import calcular_hash 
 
 class Verificador:
     def __init__(self, conn):
@@ -7,10 +8,6 @@ class Verificador:
         self.resultados_por_timestamp = {}
         self.chain = [] # Aca se almacena la cadena de bloques en memoria
 
-    def calcular_hash(self, prev_hash, datos, timestamp):
-        to_hash = prev_hash + str(datos) + timestamp
-        return hashlib.sha256(to_hash.encode()).hexdigest()
-    
     def guardar_cadena(self):
         with open("blockchain.json", "w") as f:
             json.dump(self.chain, f, indent=4)
@@ -51,7 +48,7 @@ class Verificador:
                     alerta = self.verificar_alerta(frecuencia_media, oxigeno_media, presion_media)
                     
                     prev_hash = self.chain[-1]["hash"] if self.chain else "0"*64
-                    hash_actual = self.calcular_hash(prev_hash, datos_completos, ts)
+                    hash_actual = calcular_hash(prev_hash, datos_completos, ts)
                     
                     bloque = {
                         "timestamp": ts,
