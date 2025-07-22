@@ -1,8 +1,5 @@
-<p align="center">
-  <img src="images/um_logo.png" alt="Universidad de Mendoza" />
-</p>
 
-# Sistema Concurrente de Análisis Biométrico con Cadena de Bloques Local
+# TP1 - Sistema Concurrente de Análisis Biométrico con Cadena de Bloques Local
 
 ## Información   
 - **Nombre:** Martin Navarro
