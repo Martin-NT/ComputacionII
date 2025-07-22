@@ -22,18 +22,26 @@ Trabajo práctico de la materia Computación 2. El objetivo es construir un sist
 - Python 3.9 o superior
 - (Recomendado) entorno virtual
 - Dependencias en `requirements.txt`
+- Uso de módulos estándar: `multiprocessing`, `queue`, `json`, `datetime`, `random`, `hashlib`
+- Comunicación entre procesos con `Pipe` y `Queue`
+- Sincronización con primitivas `Lock`, `Semaphore` y `Event`
+- El programa finaliza limpiamente sin procesos zombies ni recursos abiertos
 
 ---
 
-## Cómo ejecutar
+## Instalación
 
-1. Activar entorno virtual:
-   ```bash
-   source venv/bin/activate  # Linux/macOS
-   venv\Scripts\activate     # Windows
-
-2. Ejecutar el sistema principal:
-   ```bash
-   python main.py
-
-
+- **Paso 1**
+git clone git@github.com:Martin-NT/ComputacionII.git
+- **Paso 2**
+cd proyecto_biometrico
+- **Paso 3**
+chmod +x install.sh
+- **Paso 4**
+chmod +x boot.sh
+- **Paso 5**
+./install.sh
+- **Paso 6**
+./boot.sh
+- **Paso 7**
+python3 verificar_cadena.py
