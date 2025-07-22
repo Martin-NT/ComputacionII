@@ -1,20 +1,24 @@
+# verificador.py
 import hashlib
 import json
 import time
 from utils import calcular_hash 
+import multiprocessing  # para el Lock
 
 class Verificador:
-    def __init__(self, queues, stop_event):
+    def __init__(self, queues, stop_event, lock):
         self.queues = queues
         self.stop_event = stop_event
         self.resultados_por_timestamp = {}
         self.chain = []  # Cadena de bloques en memoria
         self.analizadores_terminados = 0
         self.total_analizadores = len(queues)
+        self.lock = multiprocessing.Lock() 
 
     def guardar_cadena(self):
-        with open("blockchain.json", "w") as f:
-            json.dump(self.chain, f, indent=4)
+        with self.lock:
+            with open("blockchain.json", "w") as f:
+                json.dump(self.chain, f, indent=4)
 
     def verificar_alerta(self, freq_media, oxi_media, presion_media):
         if freq_media >= 200:
@@ -58,26 +62,31 @@ class Verificador:
                             presion_media = datos_completos["presion"]["media"]
 
                             alerta = self.verificar_alerta(frecuencia_media, oxigeno_media, presion_media)
-                            
-                            prev_hash = self.chain[-1]["hash"] if self.chain else "0"*64
-                            hash_actual = calcular_hash(prev_hash, datos_completos, ts)
-                            
-                            bloque = {
-                                "timestamp": ts,
-                                "datos": datos_completos,
-                                "alerta": alerta,
-                                "prev_hash": prev_hash,
-                                "hash": hash_actual
-                            }
 
-                            self.chain.append(bloque)
+                            with self.lock:
+                                print("[VERIFICADOR] Lock adquirido")
+                                prev_hash = self.chain[-1]["hash"] if self.chain else "0"*64
+                                hash_actual = calcular_hash(prev_hash, datos_completos, ts)
+
+                                bloque = {
+                                    "timestamp": ts,
+                                    "datos": datos_completos,
+                                    "alerta": alerta,
+                                    "prev_hash": prev_hash,
+                                    "hash": hash_actual
+                                }
+
+                                self.chain.append(bloque)
+                                print("[VERIFICADOR] Lock liberado")
+
+                            # Guardar fuera del lock para evitar bloqueo prolongado
                             self.guardar_cadena()
 
                             print(f"[VERIFICADOR] Datos completos para el timestamp {ts}: \n{datos_completos}")
                             print(f"[VERIFICADOR] Alerta: {alerta}")
                             print(f"[VERIFICADOR] Bloque #{len(self.chain)-1} - Hash: {hash_actual} - Alerta: {alerta}")
 
-                time.sleep(0.1)  # evitar bucle ocupado
+                time.sleep(0.01)  # Reducido para procesar más rápido
 
         except KeyboardInterrupt:
             print("[VERIFICADOR] Interrumpido por el usuario. Cerrando proceso.")

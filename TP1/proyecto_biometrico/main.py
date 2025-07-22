@@ -18,18 +18,26 @@ def main():
     queue_c = multiprocessing.Queue()
 
     stop_event = multiprocessing.Event()
+    lock = multiprocessing.Lock()
+    semaphore = multiprocessing.Semaphore(2)  # Permite máximo 2 analizadores al mismo tiempo
 
-    proceso_a = multiprocessing.Process(target=ejecutar_analizador, args=("frecuencia", hijo_a, queue_a, stop_event))
-    proceso_b = multiprocessing.Process(target=ejecutar_analizador, args=("presion", hijo_b, queue_b, stop_event))
-    proceso_c = multiprocessing.Process(target=ejecutar_analizador, args=("oxigeno", hijo_c, queue_c, stop_event))
+    # Crear procesos de analizadores
+    proceso_a = multiprocessing.Process(target=ejecutar_analizador, args=("frecuencia", hijo_a, queue_a, stop_event, semaphore))
+    proceso_b = multiprocessing.Process(target=ejecutar_analizador, args=("presion", hijo_b, queue_b, stop_event, semaphore))
+    proceso_c = multiprocessing.Process(target=ejecutar_analizador, args=("oxigeno", hijo_c, queue_c, stop_event, semaphore))
 
-    proceso_verificador = multiprocessing.Process(target=Verificador([queue_a, queue_b, queue_c], stop_event).verificar)
+    # Crear proceso del verificador
+    proceso_verificador = multiprocessing.Process(
+        target=Verificador([queue_a, queue_b, queue_c], stop_event, lock).verificar
+    )
 
+    # Iniciar procesos
     proceso_a.start()
     proceso_b.start()
     proceso_c.start()
     proceso_verificador.start()
 
+    # Cerrar extremos no usados del pipe
     hijo_a.close()
     hijo_b.close()
     hijo_c.close()
@@ -45,8 +53,8 @@ def main():
 
     except KeyboardInterrupt:
         print("Interrumpido por el usuario.")
-        stop_event.set()  # Señal para que hijos terminen
-        time.sleep(1)     # Pequeña espera para que lean la señal
+        stop_event.set()
+        time.sleep(1)
 
     finally:
         padre_a.close()
