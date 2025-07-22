@@ -1,16 +1,15 @@
-# verificador.py
 import hashlib
 import json
 import time
 from utils import calcular_hash 
-import multiprocessing  # para el Lock
+import multiprocessing  
 
 class Verificador:
     def __init__(self, queues, stop_event, lock):
         self.queues = queues
         self.stop_event = stop_event
         self.resultados_por_timestamp = {}
-        self.chain = []  # Cadena de bloques en memoria
+        self.chain = []
         self.analizadores_terminados = 0
         self.total_analizadores = len(queues)
         self.lock = multiprocessing.Lock() 
