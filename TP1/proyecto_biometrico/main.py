@@ -1,3 +1,4 @@
+# main.py
 import multiprocessing
 import time
 from generador import GeneradorBiometrico
@@ -19,11 +20,13 @@ def main():
 
     stop_event = multiprocessing.Event()
 
+    lock = multiprocessing.Lock()  # Creamos lock y se lo pasamos al verificador
+
     proceso_a = multiprocessing.Process(target=ejecutar_analizador, args=("frecuencia", hijo_a, queue_a, stop_event))
     proceso_b = multiprocessing.Process(target=ejecutar_analizador, args=("presion", hijo_b, queue_b, stop_event))
     proceso_c = multiprocessing.Process(target=ejecutar_analizador, args=("oxigeno", hijo_c, queue_c, stop_event))
 
-    proceso_verificador = multiprocessing.Process(target=Verificador([queue_a, queue_b, queue_c], stop_event).verificar)
+    proceso_verificador = multiprocessing.Process(target=Verificador([queue_a, queue_b, queue_c], stop_event, lock).verificar)
 
     proceso_a.start()
     proceso_b.start()

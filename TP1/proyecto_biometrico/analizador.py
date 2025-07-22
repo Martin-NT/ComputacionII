@@ -1,3 +1,4 @@
+#analizador.py
 import numpy as np
 
 class Analizador:
