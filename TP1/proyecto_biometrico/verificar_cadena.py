@@ -1,4 +1,3 @@
-#verificar_cadena.py
 import json
 from utils import calcular_hash
 

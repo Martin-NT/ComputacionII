@@ -12,7 +12,7 @@ class Analizador:
     def analizar(self):
         try:
             while not self.stop_event.is_set():
-                if self.conn.poll(0.5):  # evitar bloqueo, espera con timeout
+                if self.conn.poll(0.5):  # evita bloqueo, espera con timeout
                     try:
                         dato = self.conn.recv()
                     except EOFError:
