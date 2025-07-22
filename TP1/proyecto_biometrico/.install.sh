@@ -1,17 +1,13 @@
 #!/bin/bash
 
-# Crear entorno virtual
-python3 -m venv venv
+# Crear entorno si no existe
+if [ ! -d "env" ]; then
+    python3 -m venv env
+fi
 
-# Activar entorno virtual
-source venv/bin/activate
+# Activar entorno
+source env/bin/activate
 
-# Actualizar pip
-pip install --upgrade pip
-
-# Instalar dependencias
+# Instalar requisitos
 pip install -r requirements.txt
-
-echo "¡Entorno virtual creado y dependencias instaladas!"
-echo "Para activar el entorno, ejecutá: source venv/bin/activate"
 
