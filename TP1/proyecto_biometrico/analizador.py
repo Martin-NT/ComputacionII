@@ -1,12 +1,12 @@
-#analizador.py
 import numpy as np
 
 class Analizador:
-    def __init__(self, tipo, conn, verificador_queue, stop_event):
+    def __init__(self, tipo, conn, verificador_queue, stop_event, semaphore):
         self.tipo = tipo
         self.conn = conn
         self.verificador_queue = verificador_queue
         self.stop_event = stop_event
+        self.semaphore = semaphore
         self.valores_obtenidos = []
 
     def analizar(self):
@@ -43,7 +43,10 @@ class Analizador:
                         "media": media,
                         "desv": desviacion
                     }
-                    self.verificador_queue.put(resultado)
+
+                    # Control de concurrencia con semaphore
+                    with self.semaphore:
+                        self.verificador_queue.put(resultado)
 
             print(f"[{self.tipo.upper()}] Finalizando y enviando señal de cierre.")
             self.verificador_queue.put(None)  # señal para el verificador
@@ -54,6 +57,6 @@ class Analizador:
         finally:
             self.conn.close()
 
-def ejecutar_analizador(tipo, conn, verificador_queue, stop_event):
-    analizador = Analizador(tipo, conn, verificador_queue, stop_event)
+def ejecutar_analizador(tipo, conn, verificador_queue, stop_event, semaphore):
+    analizador = Analizador(tipo, conn, verificador_queue, stop_event, semaphore)
     analizador.analizar()
