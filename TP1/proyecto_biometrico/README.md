@@ -46,62 +46,6 @@ Trabajo práctico de la materia Computación 2. El objetivo es construir un sist
 
 ---
 
-## ⚙️ Comandos de Intalación y Ejecución
-
-### 🧪 Instalación
-
-1. Clonar el repositorio
-```bash
-git clone git@github.com:Martin-NT/ComputacionII.git
-```
-
-2. Ubicarse en el proyecto
-```bash
-cd ComputacionII/TP1/proyecto_biometrico
-```
-
-3. Crear entorno virtual
-```bash
-python3 -m venv env
-```
-
-4. Activar entorno virtual
-```bash
-source env/bin/activate
-```
-
-5. Instalar dependencias
-```bash
-pip install -r requirements.txt
-```
-
-### ▶️ Ejecución
-
-6. Ejecutar el sistema principal
-```bash
-python3 main.py
-```
-7. Verificar integridad de la cadena
-```bash
-python3 verificar_cadena.py
-```
-
-### 🔍 Verificación de Procesos
-8. Para asegurarte de que no quedan procesos zombies o huérfanos en otra terminal:
-```bash
-ps aux | grep Z
-```
-```bash
-ps -el | grep Z
-```
-
-## ✅ Resultado Esperado
-- Se genera un archivo blockchain.json con los bloques generados por el sistema.
-- Al ejecutar verificar_cadena.py, se analiza la integridad de la cadena y se crea reporte.txt con estadísticas de alertas, errores y validación.
-- Todos los procesos finalizan correctamente al presionar Ctrl+C o cuando finaliza el proceso, sin dejar procesos zombies ni recursos colgados.
-
----
-
 ## Documentación de Archivos
 
 ### generador.py
@@ -140,11 +84,11 @@ Este módulo define la clase `Analizador` que procesa datos biométricos recibid
 - **Función `ejecutar_analizador()`**:  
   - Instancia un `Analizador` y llama a su método `analizar()`.  
 
+---
+
 ### verificador.py
 
 Este módulo implementa el proceso **Verificador**, responsable de recolectar los resultados enviados por los analizadores, detectar alertas y construir la cadena de bloques en el archivo `blockchain.json`.
-
----
 
 - **Clase `Verificador`**
 
@@ -152,8 +96,6 @@ Este módulo implementa el proceso **Verificador**, responsable de recolectar lo
     - `queues`: lista de `multiprocessing.Queue` con resultados provenientes de los analizadores (`frecuencia`, `presion`, `oxigeno`).  
     - `stop_event`: evento compartido que permite indicar cuándo detener el proceso.  
     - `lock`: utilizado para sincronizar el acceso concurrente al archivo `blockchain.json` y evitar condiciones de carrera.  
-
----
 
 - **Método `verificar()`**  
   - Bucle principal que recoge los datos desde las colas de los analizadores.  
@@ -172,13 +114,9 @@ Este módulo implementa el proceso **Verificador**, responsable de recolectar lo
     - Agrega el bloque a la cadena (`self.chain`) y lo guarda en `blockchain.json`.  
   - El verificador termina cuando los tres analizadores envían una señal de finalización (`None`).
 
----
-
 - **Método `guardar_cadena()`**  
   - Escribe el contenido actual de la cadena (`self.chain`) en el archivo `blockchain.json` con formato legible (`indent=4`).
   - Se utiliza un `lock` para evitar conflictos si varios procesos intentan escribir al mismo tiempo.
-
----
 
 - **Método `verificar_alerta(frecuencia, oxigeno, presion)`**  
   - Devuelve `True` si alguno de los valores excede los umbrales definidos.  
@@ -245,10 +183,58 @@ Este módulo verifica la integridad de la cadena de bloques biométrica y genera
 
 ---
 
-## Resultado esperado
-
-- Se genera un archivo `blockchain.json` con los bloques biométricos.  
-- Al ejecutar `verificar_cadena.py`, se analiza la integridad y se crea `reporte.txt` con estadísticas y alertas.  
-- Todos los procesos terminan correctamente al presionar Ctrl+C, sin dejar procesos zombies o huérfanos.
+## ✅ Resultado Esperado
+- Se genera un archivo blockchain.json con los bloques generados por el sistema.
+- Al ejecutar verificar_cadena.py, se analiza la integridad de la cadena y se crea reporte.txt con estadísticas de alertas, errores y validación.
+- Todos los procesos finalizan correctamente al presionar Ctrl+C o cuando finaliza el proceso, sin dejar procesos zombies ni recursos colgados.
 
 ---
+
+## ⚙️ Comandos de Intalación y Ejecución
+
+### 🧪 Instalación
+
+1. Clonar el repositorio
+```bash
+git clone git@github.com:Martin-NT/ComputacionII.git
+```
+
+2. Ubicarse en el proyecto
+```bash
+cd ComputacionII/TP1/proyecto_biometrico
+```
+
+3. Crear entorno virtual
+```bash
+python3 -m venv env
+```
+
+4. Activar entorno virtual
+```bash
+source env/bin/activate
+```
+
+5. Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
+
+### ▶️ Ejecución
+
+6. Ejecutar el sistema principal
+```bash
+python3 main.py
+```
+7. Verificar integridad de la cadena
+```bash
+python3 verificar_cadena.py
+```
+
+### 🔍 Verificación de Procesos
+8. Para asegurarte de que no quedan procesos zombies o huérfanos en otra terminal:
+```bash
+ps aux | grep Z
+```
+```bash
+ps -el | grep Z
+```

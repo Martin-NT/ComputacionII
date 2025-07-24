@@ -34,25 +34,23 @@ class Analizador:
                     media = np.mean(valores_obtenidos_array)
                     desviacion = np.std(valores_obtenidos_array)
 
-                    print(f"[{self.tipo.upper()}] Valores Obtenidos: {self.valores_obtenidos}")
-                    print(f"[{self.tipo.upper()}] Valor: {valor} | Media: {media:.2f} | Desviación estándar: {desviacion:.2f}")
-
                     resultado = {
                         "tipo": self.tipo,
                         "timestamp": timestamp,
                         "media": media,
-                        "desv": desviacion
+                        "desv": desviacion,
+                        "ventana": list(self.valores_obtenidos)
                     }
 
                     # Control de concurrencia con semaphore
                     with self.semaphore:
                         self.verificador_queue.put(resultado)
 
-            print(f"[{self.tipo.upper()}] Finalizando y enviando señal de cierre.")
+            print(f"[{self.tipo.upper()}] ⛔ Finalizando y enviando señal de cierre.")
             self.verificador_queue.put(None)  # señal para el verificador
 
         except KeyboardInterrupt:
-            print(f"[{self.tipo.upper()}] Analizador interrumpido. Cerrando proceso.")
+            print(f"[{self.tipo.upper()}] ⛔ Analizador interrumpido. Cerrando proceso.")
             self.verificador_queue.put(None)
         finally:
             self.conn.close()
