@@ -48,11 +48,11 @@ def main():
             padre_a.send(dato)
             padre_b.send(dato)
             padre_c.send(dato)
-            print(f"[MAIN] Enviado dato: {dato}")
+            print(f"[MAIN] 📤 Enviado dato: {dato}")
             time.sleep(1)
 
     except KeyboardInterrupt:
-        print("Interrumpido por el usuario.")
+        print("--> ⛔ Interrumpido por el usuario.")
         stop_event.set()
         time.sleep(1)
 

@@ -1,11 +1,12 @@
-import hashlib
 import json
 import time
 from utils import calcular_hash 
 import multiprocessing  
+from utils import imprimir_separador
+import os
 
 class Verificador:
-    def __init__(self, queues, stop_event, lock):
+    def __init__(self, queues, stop_event, lock, output_dir="resultados"):
         self.queues = queues
         self.stop_event = stop_event
         self.resultados_por_timestamp = {}
@@ -13,10 +14,14 @@ class Verificador:
         self.analizadores_terminados = 0
         self.total_analizadores = len(queues)
         self.lock = multiprocessing.Lock() 
+        self.output_dir = output_dir
 
     def guardar_cadena(self):
         with self.lock:
-            with open("blockchain.json", "w") as f:
+            if not os.path.exists(self.output_dir):
+                os.makedirs(self.output_dir)
+            path = os.path.join(self.output_dir, "blockchain.json")
+            with open(path, "w") as f:
                 json.dump(self.chain, f, indent=4)
 
     def verificar_alerta(self, freq_media, oxi_media, presion_media):
@@ -36,12 +41,11 @@ class Verificador:
                     while not queue.empty():
                         resultado = queue.get()
 
-                        # Detectar mensaje de cierre (None)
                         if resultado is None:
                             self.analizadores_terminados += 1
-                            print(f"[VERIFICADOR] Recibido None de un analizador. Total terminados: {self.analizadores_terminados}")
+                            print(f"[VERIFICADOR] 📤 Recibido None de un analizador. Total terminados: {self.analizadores_terminados}")
                             if self.analizadores_terminados == self.total_analizadores:
-                                print("[VERIFICADOR] Todos los analizadores terminaron. Cerrando verificador.")
+                                print("[VERIFICADOR] 🛑 Todos los analizadores terminaron. Cerrando verificador.")
                                 self.guardar_cadena()
                                 return
                             continue
@@ -62,31 +66,56 @@ class Verificador:
 
                             alerta = self.verificar_alerta(frecuencia_media, oxigeno_media, presion_media)
 
+                            # Datos necesarios para el hash
+                            datos_para_hash = {
+                                "frecuencia": {
+                                    "media": frecuencia_media,
+                                    "desv": datos_completos["frecuencia"]["desv"]
+                                },
+                                "presion": {
+                                    "media": presion_media,
+                                    "desv": datos_completos["presion"]["desv"]
+                                },
+                                "oxigeno": {
+                                    "media": oxigeno_media,
+                                    "desv": datos_completos["oxigeno"]["desv"]
+                                }
+                            }
+
                             with self.lock:
-                                print("[VERIFICADOR] Lock adquirido")
-                                prev_hash = self.chain[-1]["hash"] if self.chain else "0"*64
-                                hash_actual = calcular_hash(prev_hash, datos_completos, ts)
+                                prev_hash = self.chain[-1]["hash"] if self.chain else "0" * 64
+                                hash_actual = calcular_hash(prev_hash, datos_para_hash, ts)
 
                                 bloque = {
                                     "timestamp": ts,
-                                    "datos": datos_completos,
+                                    "datos": datos_para_hash,
                                     "alerta": alerta,
                                     "prev_hash": prev_hash,
                                     "hash": hash_actual
                                 }
 
                                 self.chain.append(bloque)
-                                print("[VERIFICADOR] Lock liberado")
 
-                            # Guardar fuera del lock para evitar bloqueo prolongado
                             self.guardar_cadena()
 
-                            print(f"[VERIFICADOR] Datos completos para el timestamp {ts}: \n{datos_completos}")
-                            print(f"[VERIFICADOR] Alerta: {alerta}")
-                            print(f"[VERIFICADOR] Bloque #{len(self.chain)-1} - Hash: {hash_actual} - Alerta: {alerta}")
+                            orden_metricas = ["frecuencia", "presion", "oxigeno"]
 
-                time.sleep(0.01)  # Reducido para procesar más rápido
+                            print(f"[VERIFICADOR] 📥 Datos completos para el timestamp ⏱️  {ts}:")
+
+                            for tipo in orden_metricas:
+                                info = datos_completos[tipo]
+                                print(f"[{tipo.upper()}] 🧪 Valores ventana: {info['ventana']}")
+
+                            for tipo in orden_metricas:
+                                info = datos_completos[tipo]
+                                print(f"[{tipo.upper()}] 📊 Media: {info['media']:.2f} | Desviación estándar: {info['desv']:.2f}")
+                            
+                            print(f"[VERIFICADOR] 🚨 Alerta: {alerta}")
+                            print(f"[VERIFICADOR] 🧱 Bloque #{len(self.chain)-1} - Hash: {hash_actual}")
+                            imprimir_separador()
+                            
+                time.sleep(0.01)
 
         except KeyboardInterrupt:
-            print("[VERIFICADOR] Interrumpido por el usuario. Cerrando proceso.")
+            print("[VERIFICADOR] ⛔ Interrumpido por el usuario. Cerrando proceso.")
             self.guardar_cadena()
