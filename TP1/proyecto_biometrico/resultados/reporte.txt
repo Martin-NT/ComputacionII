@@ -1,0 +1,15 @@
+=======================================================================
+                  Reporte Final - Cadena Biométrica
+=======================================================================
+
+Cantidad total de bloques    : 60
+Número de bloques con alertas: 0
+
+Promedios generales:
+  - Frecuencia cardíaca (bpm) : 124.18
+  - Presión sistólica (mmHg)  : 142.89
+  - Nivel de oxígeno (%)      : 95.35
+
+=======================================================================
+Estado: Cadena verificada sin errores
+=======================================================================

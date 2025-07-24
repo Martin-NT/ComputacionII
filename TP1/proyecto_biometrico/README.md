@@ -5,11 +5,11 @@
 - **Nombre:** Martin Navarro
 - **Legajo:** 62181
 - **Correo:** mt.navarro@alumno.um.edu.ar
-- **Materia**: Computación 2
+- **Materia**: Computación II
 
 ## Descripción
 
-Trabajo práctico de la materia Computación 2. El objetivo es construir un sistema concurrente y distribuido en procesos, que genere, procese y almacene datos biométricos en una cadena de bloques local.
+Trabajo práctico de la materia Computación II. El objetivo es construir un sistema concurrente y distribuido en procesos, que genere, procese y almacene datos biométricos en una cadena de bloques local.
 
 ---
 
@@ -35,7 +35,7 @@ Trabajo práctico de la materia Computación 2. El objetivo es construir un sist
 
 - Python 3.9 o superior
 - (Recomendado) Uso de entorno virtual
-- Dependencias definidas en `requirements.txt`
+- Instalar dependencias definidas en `requirements.txt` (Paso 5 de Instalación) 
 - Módulos estándar utilizados:
   - `multiprocessing`, `queue`, `json`, `datetime`, `random`, `hashlib`, `os`, `time`
 - Comunicación entre procesos con:
@@ -50,140 +50,167 @@ Trabajo práctico de la materia Computación 2. El objetivo es construir un sist
 
 ### generador.py
 
-Este módulo contiene la clase `GeneradorBiometrico`, responsable de generar datos biométricos simulados.
+Este módulo contiene la clase GeneradorBiometrico, responsable de simular la generación de datos biométricos.
 
-- **Clase `GeneradorBiometrico`**:  
-  - **Método `generar_dato()`**:  
-    - Genera y devuelve un diccionario con un timestamp actual y valores aleatorios para:  
-      - `frecuencia` (60 a 180 bpm)  
-      - `presion` (presión sistólica entre 110 y 180, presión diastólica entre 70 y 110)  
-      - `oxigeno` (nivel de oxígeno entre 90 y 100 %)  
-
+- **Clase `GeneradorBiometrico`**
+  - **Método `generar_dato()`**
+    - Devuelve un diccionario con:
+      - `timestamp`: fecha y hora actual.
+      - `frecuencia`: valor aleatorio entre 60 y 180 (latidos por minuto).
+      - `presion`: tupla con presión sistólica (110–180) y diastólica (70–110).
+      - `oxigeno`: valor aleatorio entre 90% y 100%.
 ---
 
 ### analizador.py
 
-Este módulo define la clase `Analizador` que procesa datos biométricos recibidos desde un proceso generador, calcula estadísticas y envía resultados a un proceso verificador.
+Define la clase `Analizador`, utilizada por cada proceso para analizar una métrica biométrica en tiempo real (frecuencia, presión u oxígeno).
 
-- **Clase `Analizador`**:  
-  - **Atributos**:  
-    - `tipo`: indica el tipo de dato biométrico que analiza (`frecuencia`, `presion` o `oxigeno`).  
-    - `conn`: extremo del pipe para recibir datos.  
-    - `verificador_queue`: cola para enviar resultados al verificador.  
-    - `stop_event`: evento para detener el análisis.  
-    - `semaphore`: controla la concurrencia permitiendo máximo 2 analizadores activos simultáneamente.  
-    - `valores_obtenidos`: lista con los últimos 30 valores analizados para cálculo estadístico.  
+- **Clase `Analizador`**
+  - **Atributos**:
+    - `tipo`: tipo de dato a analizar (`frecuencia`, `presion`, `oxigeno`).
+    - `conn`: conexión del `Pipe` por donde recibe datos desde el generador.
+    - `verificador_queue`: `Queue` hacia el verificador para enviar estadísticas calculadas.
+    - `stop_event`: evento compartido para indicar cuándo detener el análisis.
+    - `semaphore`: semáforo para limitar el número de analizadores concurrentes.
+    - `valores_obtenidos`: ventana deslizante de los últimos 30 valores para cálculo estadístico.
 
-  - **Método `analizar()`**:  
-    - En un bucle hasta que se setea `stop_event`, lee datos si están disponibles sin bloqueo.  
-    - Extrae el valor correcto según tipo (`frecuencia`, `presion` o `oxigeno`).  
-    - Calcula la media y desviación estándar de los últimos 30 valores.  
-    - Envía un diccionario con tipo, timestamp, media y desviación a la cola del verificador con control de concurrencia (semaphore).  
-    - Envía `None` a la cola cuando termina para indicar cierre.  
+  - **Método `analizar()`**
+    - Escucha continuamente la conexión (`conn`) y acumula los últimos 30 valores.
+    - Calcula la media y desviación estándar con `numpy`.
+    - Envia al verificador un diccionario con:
+      ```python
+      {
+        "tipo": "frecuencia/presion/oxigeno",
+        "timestamp": "...",
+        "media": valor,
+        "desv": valor,
+        "ventana": [últimos 30 valores]
+      }
+      ```
+    - Utiliza `semaphore` para controlar el acceso a la `Queue`.
+    - Al finalizar, envía `None` para indicar el fin del análisis.
 
-- **Función `ejecutar_analizador()`**:  
-  - Instancia un `Analizador` y llama a su método `analizar()`.  
+- **Función `ejecutar_analizador()`**
+  - Crea un analizador y llama al método `analizar()`.
 
 ---
 
 ### verificador.py
 
-Este módulo implementa el proceso **Verificador**, responsable de recolectar los resultados enviados por los analizadores, detectar alertas y construir la cadena de bloques en el archivo `blockchain.json`.
+Contiene el proceso `Verificador`, que escucha las métricas analizadas, verifica condiciones de alerta, construye bloques de datos y los guarda en una cadena de bloques persistente (`blockchain.json`).
 
 - **Clase `Verificador`**
+  - **Constructor `__init__(queues, stop_event, lock, output_dir="resultados")`**
+    - `queues`: lista de colas con resultados desde los analizadores.
+    - `stop_event`: evento para detener el bucle de verificación.
+    - `lock`: `multiprocessing.Lock` para sincronizar acceso a archivos.
+    - `output_dir`: carpeta donde se guarda la cadena (`blockchain.json`).
 
-  - **Constructor** `__init__(queues, stop_event, lock)`  
-    - `queues`: lista de `multiprocessing.Queue` con resultados provenientes de los analizadores (`frecuencia`, `presion`, `oxigeno`).  
-    - `stop_event`: evento compartido que permite indicar cuándo detener el proceso.  
-    - `lock`: utilizado para sincronizar el acceso concurrente al archivo `blockchain.json` y evitar condiciones de carrera.  
+  - **Método `verificar()`**
+    - Escucha resultados desde las tres colas hasta recibir los tres tipos (`frecuencia`, `presion`, `oxigeno`) para cada `timestamp`.
+    - Verifica si hay alerta:
+      - Frecuencia ≥ 200.
+      - Presión sistólica ≥ 200.
+      - Oxígeno fuera del rango [90–100].
+    - Construye un bloque con:
+      ```python
+      {
+        "timestamp": ...,
+        "datos": {
+            "frecuencia": {"media": ..., "desv": ...},
+            "presion": {"media": ..., "desv": ...},
+            "oxigeno": {"media": ..., "desv": ...}
+        },
+        "alerta": True/False,
+        "prev_hash": ...,
+        "hash": ...
+      }
+      ```
+    - Agrega el bloque a `self.chain` y lo guarda en `blockchain.json`.
+    - Imprime resumen del bloque por consola.
+    - Termina cuando los tres analizadores envían `None`.
 
-- **Método `verificar()`**  
-  - Bucle principal que recoge los datos desde las colas de los analizadores.  
-  - Agrupa los resultados por `timestamp` hasta obtener los tres tipos requeridos.  
-  - Una vez que hay datos completos:
-    - Calcula si hay una **alerta biométrica** en base a los siguientes criterios:
-      - Frecuencia ≥ 200
-      - Oxígeno fuera del rango [90, 100]
-      - Presión ≥ 200
-    - Construye un nuevo bloque con:
-      - `timestamp`
-      - `datos`: diccionario con `media` y `desv` de cada parámetro
-      - `alerta`: `True` o `False`
-      - `prev_hash`: hash del bloque anterior (o `"0"*64` si es el primero)
-      - `hash`: generado con `utils.calcular_hash(prev_hash, datos, timestamp)`
-    - Agrega el bloque a la cadena (`self.chain`) y lo guarda en `blockchain.json`.  
-  - El verificador termina cuando los tres analizadores envían una señal de finalización (`None`).
+  - **Método `guardar_cadena()`**
+    - Guarda la cadena de bloques en `blockchain.json` con formato indentado.
+    - Usa `lock` para evitar escritura concurrente.
 
-- **Método `guardar_cadena()`**  
-  - Escribe el contenido actual de la cadena (`self.chain`) en el archivo `blockchain.json` con formato legible (`indent=4`).
-  - Se utiliza un `lock` para evitar conflictos si varios procesos intentan escribir al mismo tiempo.
-
-- **Método `verificar_alerta(frecuencia, oxigeno, presion)`**  
-  - Devuelve `True` si alguno de los valores excede los umbrales definidos.  
-  - En caso contrario, devuelve `False`.
-
+  - **Método `verificar_alerta()`**
+    - Evalúa si alguna de las tres métricas biométricas está fuera del rango normal.
 ---
 
 ### main.py
 
-Este script principal orquesta el sistema concurrente de análisis biométrico.
+Script principal que coordina todos los procesos del sistema.
 
-- Crea un generador de datos biométricos.  
-- Establece pipes para comunicación entre el generador y los analizadores.  
-- Crea colas para que los analizadores envíen resultados al verificador.  
-- Define un evento, un lock y un semáforo para sincronización y control de concurrencia.  
-- Crea y arranca procesos para tres analizadores (`frecuencia`, `presion`, `oxigeno`) y un proceso verificador.  
-- En un ciclo de 60 iteraciones, genera datos y los envía a cada analizador una vez por segundo.  
-- Captura interrupciones para detener los procesos limpiamente y asegurar cierre sin procesos zombies.  
+- Crea el generador de datos biométricos.
+- Configura:
+  - Tres `Pipe` para comunicación con los analizadores.
+  - Tres `Queue` para enviar estadísticas al verificador.
+  - `stop_event` para coordinación de finalización.
+  - `semaphore` que limita la ejecución simultánea a 2 analizadores.
+- Lanza:
+  - Tres procesos para los analizadores (frecuencia, presión, oxígeno).
+  - Un proceso verificador.
+- En un ciclo de 60 iteraciones (1 por segundo):
+  - Genera un dato biométrico y lo envía por los tres pipes.
+- Al finalizar:
+  - Envía `None` a los analizadores para señal de término.
+  - Cierra todos los pipes y espera que los procesos finalicen.
+  - Asegura que no queden procesos zombies ni recursos abiertos.
 
 ---
 
 ### utils.py
 
-Contiene funciones utilitarias para el sistema.
+Funciones auxiliares del sistema.
 
-- **Función `calcular_hash(prev_hash, datos, timestamp)`**:  
-  - Recibe el hash previo, los datos y el timestamp del bloque.  
-  - Serializa los datos con claves ordenadas y sin espacios extra.  
-  - Concadena `prev_hash + datos_serializados + timestamp`.  
-  - Calcula y devuelve el hash SHA-256 de la concatenación.  
+- **`calcular_hash(prev_hash, datos, timestamp)`**
+  - Serializa los `datos` ordenadamente (sin espacios extra).
+  - Concatena con el `prev_hash` y el `timestamp`.
+  - Devuelve el hash SHA-256 del resultado.
 
+- **`imprimir_separador()`**
+  - Imprime un separador visual de bloques con emojis 🧱.
 ---
 
 ### verificar_cadena.py
 
-Este módulo verifica la integridad de la cadena de bloques biométrica y genera un reporte con estadísticas.
+Verifica la integridad de la cadena de bloques (`blockchain.json`) y genera un reporte (`reporte.txt`) con estadísticas generales.
 
-- **Clase `VerificarCadena`**:  
-  - **Atributos**:  
-    - `path_archivo`: ruta al archivo JSON de la cadena (`blockchain.json`).  
-    - `path_reporte`: ruta al archivo de reporte (`reporte.txt`).  
-    - `cadena`: lista con los bloques cargados.  
-    - `corrupciones`: lista con errores encontrados durante la verificación.  
+- **Clase `VerificarCadena`**
+  - **Atributos**:
+    - `cadena`: lista de bloques cargados.
+    - `corrupciones`: errores detectados en la cadena.
+    - Rutas a `blockchain.json` y `reporte.txt`.
 
-  - **Método `cargar_cadena()`**:  
-    - Intenta cargar la cadena desde archivo JSON.  
-    - Maneja errores si el archivo no existe o tiene formato inválido.  
+  - **Método `cargar_cadena()`**
+    - Carga el archivo `blockchain.json`.
+    - Reporta error si no existe o tiene formato inválido.
 
-  - **Método `verificar_cadena()`**:  
-    - Recorre cada bloque y verifica que:  
-      - El `prev_hash` coincide con el hash del bloque anterior.  
-      - El hash almacenado coincide con el hash recalculado.  
-    - Registra en `corrupciones` cualquier inconsistencia.  
+  - **Método `verificar_cadena()`**
+    - Recalcula los hashes de todos los bloques.
+    - Verifica que:
+      - Cada `prev_hash` coincida con el hash del bloque anterior.
+      - El `hash` almacenado coincida con el recalculado.
+    - Si encuentra errores, los guarda en `corrupciones`.
 
-  - **Método `generar_reporte()`**:  
-    - Calcula estadísticas generales: total bloques, bloques con alertas y promedio de frecuencia, presión y oxígeno.  
-    - Escribe un reporte formateado con estos datos.  
+  - **Método `generar_reporte()`**
+    - Calcula:
+      - Total de bloques.
+      - Cantidad de alertas.
+      - Promedios generales de frecuencia, presión y oxígeno.
+    - Escribe `reporte.txt` con formato legible y resumen final.
 
-  - **Método `ejecutar()`**:  
-    - Ejecuta todo el flujo: carga la cadena, verifica integridad y genera reporte si todo es correcto.  
-    - Informa al usuario sobre errores o éxito.  
+  - **Método `ejecutar()`**
+    - Ejecuta todo el flujo: carga, verifica e informa resultado.
+    - Solo genera el reporte si la cadena está libre de errores.
 
 - Puede ejecutarse directamente con `python3 verificar_cadena.py`.  
 
 ---
 
 ## ✅ Resultado Esperado
+
 - Se genera un archivo blockchain.json con los bloques generados por el sistema.
 - Al ejecutar verificar_cadena.py, se analiza la integridad de la cadena y se crea reporte.txt con estadísticas de alertas, errores y validación.
 - Todos los procesos finalizan correctamente al presionar Ctrl+C o cuando finaliza el proceso, sin dejar procesos zombies ni recursos colgados.

@@ -19,14 +19,14 @@ def main():
 
     stop_event = multiprocessing.Event()
     lock = multiprocessing.Lock()
-    semaphore = multiprocessing.Semaphore(2)  # Permite máximo 2 analizadores al mismo tiempo
+    semaphore = multiprocessing.Semaphore(2)  # Máximo 2 analizadores al mismo tiempo
 
-    # Crear procesos de analizadores
+    # Crear procesos analizadores
     proceso_a = multiprocessing.Process(target=ejecutar_analizador, args=("frecuencia", hijo_a, queue_a, stop_event, semaphore))
     proceso_b = multiprocessing.Process(target=ejecutar_analizador, args=("presion", hijo_b, queue_b, stop_event, semaphore))
     proceso_c = multiprocessing.Process(target=ejecutar_analizador, args=("oxigeno", hijo_c, queue_c, stop_event, semaphore))
 
-    # Crear proceso del verificador
+    # Crear proceso verificador
     proceso_verificador = multiprocessing.Process(
         target=Verificador([queue_a, queue_b, queue_c], stop_event, lock).verificar
     )
@@ -53,18 +53,30 @@ def main():
 
     except KeyboardInterrupt:
         print("--> ⛔ Interrumpido por el usuario.")
-        stop_event.set()
-        time.sleep(1)
-
+    
     finally:
+        print("[MAIN] 🧹 Enviando señales de finalización...")
+
+        # Señal explícita de finalización a los analizadores
+        padre_a.send(None)
+        padre_b.send(None)
+        padre_c.send(None)
+
+        # Cerrar los extremos de los pipes
         padre_a.close()
         padre_b.close()
         padre_c.close()
 
+        # Setea el evento de detención para el verificador
+        stop_event.set()
+
+        # Esperar que terminen todos
         proceso_a.join()
         proceso_b.join()
         proceso_c.join()
         proceso_verificador.join()
+
+        print("[MAIN] ✅ Todos los procesos finalizaron correctamente.")
 
 if __name__ == "__main__":
     main()
