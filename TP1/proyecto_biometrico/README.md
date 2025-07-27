@@ -217,6 +217,21 @@ Verifica la integridad de la cadena de bloques (`blockchain.json`) y genera un r
 
 ---
 
+## 🔄 Elección de `Pipe` sobre FIFO
+
+En este proyecto se utilizó `Pipe` (de `multiprocessing`) en lugar de FIFO (archivos especiales) para la comunicación entre procesos por las siguientes razones:
+
+- `Pipe` es **una solución de comunicación en memoria** directamente integrada en Python, lo que permite una transmisión de datos **más rápida y eficiente** entre procesos relacionados (padre-hijo).
+- Es más **seguro y manejable** que un FIFO, ya que:
+  - No requiere crear ni borrar archivos en el sistema de archivos.
+  - No hay riesgo de interferencia externa (otro proceso podría escribir en un FIFO si conoce su ruta).
+- `Pipe` proporciona **extremos de lectura y escritura directamente en memoria**, ideales para la comunicación entre procesos que están bajo nuestro control.
+- El uso de `Pipe` es **más simple y directo** que manejar un FIFO con `os.mkfifo()` y abrir archivos manualmente.
+
+En este sistema, el generador de datos es el **único escritor**, y cada analizador es el **único lector** de su `Pipe`. Esto hace que la estructura de `Pipe` sea adecuada y eficiente.
+
+---
+
 ## ⚙️ Comandos de Intalación y Ejecución
 
 ### 🧪 Instalación
