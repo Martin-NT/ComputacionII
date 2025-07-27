@@ -12,12 +12,16 @@ class Analizador:
     def analizar(self):
         try:
             while not self.stop_event.is_set():
-                if self.conn.poll(0.5):  # evita bloqueo, espera con timeout
+                if self.conn.poll(0.5):  # evita bloqueo
                     try:
                         dato = self.conn.recv()
                     except EOFError:
-                        print(f"[{self.tipo.upper()}] Pipe cerrado. Cerrando analizador.")
+                        print(f"[{self.tipo.upper()}] ❌ Pipe cerrado. Cerrando analizador.")
                         break
+
+                    if dato is None:
+                        print(f"[{self.tipo.upper()}] ✅ Señal de fin recibida.")
+                        break  # fin de datos
 
                     timestamp = dato["timestamp"]
 
@@ -30,9 +34,8 @@ class Analizador:
                     if len(self.valores_obtenidos) > 30:
                         self.valores_obtenidos.pop(0)
 
-                    valores_obtenidos_array = np.array(self.valores_obtenidos)
-                    media = np.mean(valores_obtenidos_array)
-                    desviacion = np.std(valores_obtenidos_array)
+                    media = np.mean(self.valores_obtenidos)
+                    desviacion = np.std(self.valores_obtenidos)
 
                     resultado = {
                         "tipo": self.tipo,
@@ -42,16 +45,16 @@ class Analizador:
                         "ventana": list(self.valores_obtenidos)
                     }
 
-                    # Control de concurrencia con semaphore
                     with self.semaphore:
                         self.verificador_queue.put(resultado)
 
             print(f"[{self.tipo.upper()}] ⛔ Finalizando y enviando señal de cierre.")
-            self.verificador_queue.put(None)  # señal para el verificador
+            self.verificador_queue.put(None)
 
         except KeyboardInterrupt:
-            print(f"[{self.tipo.upper()}] ⛔ Analizador interrumpido. Cerrando proceso.")
+            print(f"[{self.tipo.upper()}] ⛔ Interrumpido por el usuario.")
             self.verificador_queue.put(None)
+
         finally:
             self.conn.close()
 
