@@ -27,8 +27,10 @@ Trabajo práctico de la materia Computación II. El objetivo es implementar un s
 | `processor/screenshot.py` | Genera el screenshot de la página web (Playwright) |
 | `processor/performance.py` | Calcula el rendimiento de la página (requests). |
 | `processor/image_processor.py` | Descarga imágenes y genera thumbnails (Pillow). |
+| `processor/tech_analyzer.py` | Analizador de tecnologías web (Bonus Track 3). |
 | `client.py` | Cliente de prueba simple para conectar directo al Servidor B (Socket). |
 | `client2.py` | Cliente de prueba completo para conectar al Servidor A (HTTP). |
+| `client3.py` | Cliente de prueba avanzado (demuestra Bonus Track 3). |
 | `tests/test_processor.py` | Test de integración para el Servidor B. |
 | `tests/test_scraper.py` | Test de integración para el Servidor A. |
 | `requirements.txt` | Lista de dependencias de Python necesarias (ej: aiohttp, playwright). |
@@ -96,7 +98,19 @@ python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 90
 
 Con los dos servidores corriendo, abre una **tercera terminal** (con el entorno activado) para ejecutar las pruebas.
 
-### Prueba A: Cliente Python Completo (Recomendado)
+### Prueba A: Cliente Python Avanzado (Recomendado)
+
+El script `client3.py` (el cliente HTTP mejorado) prueba toda la arquitectura + el Bonus Track 3:
+1.  Se conecta al **Servidor A** (puerto 8000).
+2.  Imprime el JSON completo que recibe de `https://www.google.com`.
+3.  Decodifica y guarda la imagen `google_screenshot.png`.
+
+**Comando:**
+```bash
+python3 client3.py
+```
+
+### Prueba B: Cliente Python Completo
 
 El script `client2.py` (el cliente HTTP mejorado) prueba toda la arquitectura:
 1.  Se conecta al **Servidor A** (puerto 8000).
@@ -108,7 +122,7 @@ El script `client2.py` (el cliente HTTP mejorado) prueba toda la arquitectura:
 python3 client2.py
 ```
 
-### Prueba B: Probar SÓLO el Servidor B
+### Prueba C: Probar SÓLO el Servidor B
 
 El script `client.py` original prueba la conexión directa por socket al **Servidor B** (puerto 9090).
 
@@ -118,20 +132,20 @@ python3 client.py
 ```
 - **Salida Esperada:** `ok ['screenshot', 'performance', 'thumbnails']`
 
-### Prueba C: Probar con `curl` 
+### Prueba D: Probar con `curl` 
 
 #### Para ver JSON de otra URL
 Si quieres probar rápidamente con **otra URL** y solo ver el JSON en la terminal.
 
 ```bash
-curl -s "http://127.0.0.1:8000/scrape?url=https://www.google.com" | python3 -m json.tool
+curl -s "http://127.0.0.1:8000/scrape?url=https://www.python.org" | python3 -m json.tool
 ```
 
 #### Para guardar imagen de otra URL
 Si quieres probar con **otra URL** y guardar su screenshot directamente.
 
 ```bash
-curl -s "http://127.0.0.1:8000/scrape?url=https://www.google.com" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > google_screenshot.png 
+curl -s "http://127.0.0.1:8000/scrape?url=https://www.python.org" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > python_screenshot.png
 ```
 
 ## 4. Correr los Tests

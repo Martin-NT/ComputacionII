@@ -48,16 +48,30 @@ except Exception:
     def generate_thumbnails(url: str, *, max_images: int = 3, thumb_size=(240, 240)) -> list[str]:
         return []
 
+# --- BONUS OPCIÓN 3 ---
+try:
+    from processor.tech_analyzer import analyze_technologies
+except Exception as e:  
+    print(f"[ADVERTENCIA] Falló la importación de 'tech_analyzer'. Error real: {e}") 
+
+    def analyze_technologies(url: str) -> Dict[str, Any]:
+        # Fallback para que el servidor no se caiga
+        return {"error": "Fallo en la inicialización del módulo de tecnologías"}
 
 # === Worker que corre en proceso ===
 def process_website(url: str, *, thumb_count: int = 3, thumb_size=(240, 240)) -> Dict[str, Any]:
     screenshot_b64 = take_screenshot(url)
     performance = analyze_performance(url)
     thumbnails = generate_thumbnails(url, max_images=thumb_count, thumb_size=thumb_size)
+    
+    # Análisis de tecnologías web
+    technologies = analyze_technologies(url)
+
     return {
         "screenshot": screenshot_b64,
         "performance": performance,
         "thumbnails": thumbnails,
+        "technologies": technologies, # --> Devuelvo el análisis de tecnologías
     }
 
 
@@ -119,7 +133,7 @@ def main():
         ThreadedTCPServer.executor = executor
         with ThreadedTCPServer((args.ip, args.port), Handler) as srv:
             print(f"\n[Servidor B] Escuchando en {args.ip}:{args.port} (pool={args.processes} procesos)")
-            print("(Press CTRL+C to quit)")
+            print("(Presiona CTRL+C para salir)")
             try:
                 srv.serve_forever()
             except KeyboardInterrupt:
