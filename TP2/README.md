@@ -137,7 +137,7 @@ curl -s "http://127.0.0.1:8000/scrape?url=https://www.google.com" | python3 -c "
 ## 4. Correr los Tests
 Para que el sistema funcione, debes tener **ambos servidores corriendo** al mismo tiempo en dos terminales separadas. Asegúrate de tener el entorno virtual (`venv`) activado en ambas.
 
-# Prueba del Servidor B
+### Prueba del Servidor B
 - **Requiere:** Que el **Servidor B** (`server_processing.py`) esté corriendo en la Terminal 1 y el entorno virtual activado en la nueva terminal.
 - **Comando:**
     ```bash
@@ -145,7 +145,7 @@ Para que el sistema funcione, debes tener **ambos servidores corriendo** al mism
     ```
 - **Salida esperada:** `✅ PRUEBA SERVIDOR B: EXITOSA.`
 
-# Prueba del Servidor A (y la integración con B)
+### Prueba del Servidor A (y la integración con B)
 - **Requiere:** Que **AMBOS servidores** (A y B) estén corriendo en sus terminales y el entorno virtual activado en la nueva terminal.
 - **Comando:**
     ```bash
