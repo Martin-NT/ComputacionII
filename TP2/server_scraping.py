@@ -77,6 +77,7 @@ async def handle_scrape(request: web.Request) -> web.Response:
 
     # Validación de parámetros 
     url = request.rel_url.query.get("url")
+    print(f"\n[Servidor A] Recibida petición para: {url}")
     if not url:
         return web.json_response({"status": "error", "error": "missing url"}, status=400)
     
@@ -118,6 +119,7 @@ async def handle_scrape(request: web.Request) -> web.Response:
             }
 
             # Devuelve respuesta JSON
+            print(f"[Servidor A] Tarea completada para: {url}")
             return web.json_response(out)
 
         # Manejo de errores globales 

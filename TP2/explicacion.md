@@ -1,190 +1,304 @@
-# TP2 
-Este documento explica qué hace cada archivo del proyecto.
----
+# Falta
+- Tests
+- Documentacion 
+- Revisar que cumpla todo
+- Que se ejecute sin fallas
+- gitignore 
 
-## 1) Mapa general del proyecto
+# Comandos que funcionan 
+1. python3 server_processing.py -i 127.0.0.1 -p 9090
+2. python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090
 
-```
-TP2/
-├── server_scraping.py          # Servidor HTTP asíncrono (Parte A)
-├── server_processing.py        # (Stub opcional) Servidor B de prueba
-├── scraper/
-│   ├── __init__.py             # Marca paquete
-│   ├── async_http.py           # Descarga de HTML asíncrona (aiohttp)
-│   ├── html_parser.py          # Parsing de título, links, headers, imágenes
-│   └── metadata_extractor.py   # Extracción de metatags relevantes
-├── common/
-│   ├── __init__.py             # Marca paquete
-│   └── serialization.py        # Helpers JSON (bytes <-> dict)
-├── requirements.txt            # Dependencias
-└── README.md                   # Instrucciones rápidas de uso
-```
+- python3 client2.py 
+- python3 client.py
 
-**Idea clave:** el cliente habla con **server_scraping.py**, que coordina el scraping y (si está disponible) le pide trabajo al servidor B. La Parte A ya funciona independientemente; la integración con B es asíncrona y transparente para el cliente.
+- curl -s "http://127.0.0.1:8000/scrape?url=https://www.google.com" | python3 -m json.tool
+- curl -s "http://127.0.0.1:8000/scrape?url=https://www.google.com" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > google_screenshot.png 
 
----
+###  TERMINAL 1: Iniciar Servidor B (Procesamiento)
+Este servidor escucha en un socket TCP y espera tareas.
 
-## 2) Flujo de una request (de punta a punta)
-
-1. **Cliente** llama: `GET /scrape?url=https://example.com`.
-2. **`server_scraping.py`** recibe la request con `aiohttp.web`.
-3. Lanza una **tarea asíncrona** para descargar el HTML (`fetch_text`) y, en paralelo, prepara la llamada asíncrona al servidor B (si está corriendo).
-4. Cuando llega el HTML, usa **`html_parser.py`** y **`metadata_extractor.py`** para extraer: título, links, headers H1–H6, cantidad de imágenes y metatags.
-5. Espera el resultado de B (si existe) **sin bloquear**.
-6. Responde al cliente con **un JSON consolidado**: `scraping_data` + `processing_data` (si B respondió).
-
-Diagrama rápido:
+```bash
+python3 server_processing.py -i 127.0.0.1 -p 9090
+python3 server_processing.py -i 127.0.0.1 -p 9000 -n 2
 
 ```
-Cliente → server_scraping.py → (tarea A) fetch_text
-                         ↘→ (tarea B) llamada a Servidor B (opcional)
-parse_html + extract_meta → unir resultados → JSON al Cliente
+###  TERMINAL 2: Iniciar Servidor A
+
+```bash
+python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090
+python3 server_scraping.py -i 0.0.0.0 -p 8000
+
+```
+
+###  TERMINAL 3: 
+```bash
+curl -s "http://127.0.0.1:8000/scrape?url=https://example.com" | python3 -m json.tool
+```
+
+```bash
+curl "http://127.0.0.1:8000/scrape?url=https://example.com"
+```
+
+python3 client.py https://example.com
+
+
+
+curl -s "http://127.0.0.1:8000/scrape?url=https://example.com" | jq -r .processing_data.screenshot | base64 -d > screenshot.png
+
+# Segun Gemini
+python3 server_processing.py -i 127.0.0.1 -p 9090
+
+python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090
+
+curl -s "http://127.0.0.1:8000/scrape?url=https://example.com" | python3 -m json.tool
+
+curl -s "http://127.0.0.1:8000/scrape?url=https://example.com" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > screenshot.png
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 3. Ejemplo de Uso y Pruebas
+
+Con los servidores A y B corriendo en sus terminales, puedes usar una tercera terminal para realizar las pruebas.
+
+### Prueba 1: Probar Sistema Completo (Recomendado)
+
+El script `client2.py` (o como lo hayas llamado) prueba toda la arquitectura:
+1.  Se conecta al **Servidor A** (puerto 8000).
+2.  Le pide analizar `https://example.com`.
+3.  Imprime el JSON completo que recibe.
+4.  Decodifica y guarda la imagen `screenshot_cliente.png`.
+
+**Comando:**
+```bash
+python3 client2.py
+```
+
+**Salida Esperada:**
+```
+--- Prueba Completa: Analizando [https://example.com](https://example.com) ---
+
+--- JSON Recibido del Servidor A: ---
+{
+    "url": "[https://example.com](https://example.com)",
+    "timestamp": "...",
+    "scraping_data": { ... },
+    "processing_data": {
+        "screenshot": "iVBORw0KGgo...",
+        ...
+    },
+    "status": "success"
+}
+--------------------------------------
+
+Procesando y guardando screenshot...
+✅ ¡Imagen guardada como screenshot_cliente.png!
 ```
 
 ---
 
-## 3) Detalle de archivos
+### Prueba 2: Probar con `curl` (Para URLs personalizadas)
 
-### 3.1 `server_scraping.py` (núcleo de la Parte A)
+Si quieres probar rápidamente con **otras URLs** sin modificar el script, puedes usar `curl`.
 
-**Rol:** Servidor HTTP asíncrono. Expone `/scrape`, coordina tareas, encapsula errores y arma el JSON final.
+**Para ver solo el JSON formateado:**
+(Cambia `https://google.com` por la URL que quieras)
+```bash
+curl -s "[http://127.0.0.1:8000/scrape?url=https://google.com](http://127.0.0.1:8000/scrape?url=https://google.com)" | python3 -m json.tool
+```
 
-**Lo más importante dentro del archivo:**
-
-* **Imports clave:** `argparse`, `asyncio`, `aiohttp.web`, y módulos propios (`scraper/*`, `common/serialization`).
-* **Handlers asíncronos (`async def`)**: `handle_scrape(request)` procesa la query `url`, lanza tareas asíncronas (descarga y llamada a B), hace `await` cuando necesita datos y retorna `web.json_response(...)`.
-* **Comunicación con B (asíncrona):** usa `asyncio.open_connection` para abrir un socket TCP y un **protocolo de longitud-prefijo + JSON** (4 bytes big-endian con la longitud, seguido por el JSON). Así evita leer de más o quedarse corto con `recv`.
-* **CLI (`argparse`)**: permite correr con `--ip`, `--port`, `--proc-ip`, `--proc-port`.
-* **Manejo de errores**: responde 400 (URL faltante), 504 (timeout) o 500 (excepciones generales), siempre en **JSON**.
-
-**Por qué es asíncrono:** `aiohttp` y `asyncio` permiten que el servidor atienda **muchas conexiones concurrentes** sin crear un hilo por conexión y sin bloquear cuando espera red/IO.
-
----
-
-### 3.2 `scraper/async_http.py`
-
-**Rol:** Descarga **asíncrona** del HTML.
-
-**Claves técnicas:**
-
-* `aiohttp.ClientSession` con **timeout** (30s) y `User-Agent` propio.
-* `resp.raise_for_status()` levanta errores HTTP 4xx/5xx para que el servidor devuelva una respuesta clara.
-* `await resp.text()` decodifica el cuerpo según el `Content-Type`/encoding informado por el servidor.
-
-**Cuándo tocarlo:** si necesitás headers custom, cookies, autenticación o limitar redirecciones.
+**Para guardar solo la imagen (sin ver el JSON):**
+(Cambia `https...` y `google.png` por lo que quieras)
+```bash
+curl -s "[http://127.0.0.1:8000/scrape?url=https://google.com](http://127.0.0.1:8000/scrape?url=https://google.com)" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > google.png
+```
 
 ---
 
-### 3.3 `scraper/html_parser.py`
+### Prueba 3: Probar SÓLO el Servidor B
 
-**Rol:** A partir del HTML, extraer **título**, **todos los links** (normalizados a URLs absolutas con `urljoin`), **estructura** (conteo de `h1..h6`) y **cantidad de imágenes**.
+El script `client.py` original prueba la conexión directa por socket al **Servidor B** (puerto 9090).
 
-**Claves técnicas:**
+**Comando:**
+```bash
+python3 client.py
+```
 
-* Usa `BeautifulSoup` con parser `lxml` (rápido y tolerante).
-* Normaliza links relativos → absolutos con `urljoin(base_url, href)`. Esto es crítico para análisis posterior y evita duplicados relativos.
-* Devuelve un `dict` listo para serializar a JSON.
+**Salida Esperada:**
+```
+ok ['screenshot', 'performance', 'thumbnails']
+```
 
-**Cuándo tocarlo:** si querés extraer más cosas (p.ej., links externos vs internos, textos de los headers, etc.).
 
----
 
-### 3.4 `scraper/metadata_extractor.py`
 
-**Rol:** Extraer **metatags relevantes**: `description`, `keywords`, y **Open Graph** (`og:title`, `og:description`, `og:image`).
 
-**Claves técnicas:**
 
-* Busca `meta` con `name` o `property` y toma el `content` si no está vacío.
-* Filtra por un conjunto `RELEVANT_META` para no ensuciar el JSON.
 
-**Cuándo tocarlo:** si la consigna pide más metatags (Twitter Cards, `author`, etc.).
 
----
 
-### 3.5 `common/serialization.py`
 
-**Rol:** Helpers mínimos para convertir entre **dict ↔ bytes** usando JSON UTF‑8.
 
-**Claves técnicas:**
 
-* `to_json(data) -> bytes`: `json.dumps(...).encode("utf-8")`.
-* `from_json(raw: bytes) -> Any`: `json.loads(raw.decode("utf-8"))`.
+# TP2 - Sistema de Scraping y Análisis Web Distribuido
 
-**Por qué existe:** el protocolo con B es **binario** (lleva un prefijo de longitud de 4 bytes). Necesitamos manipular **bytes**, no sólo strings.
+Este proyecto implementa un sistema distribuido de scraping y análisis web en Python, basado en la consigna del TP2 de Computación II. El sistema se compone de dos servidores que trabajan de forma coordinada.
+
+* **Servidor A (`server_scraping.py`):** Un servidor HTTP asíncrono (AsyncIO) que actúa como *frontend*. Recibe peticiones de los clientes, realiza el scraping básico y delega el procesamiento pesado.
+* **Servidor B (`server_processing.py`):** Un servidor TCP de procesamiento (Multiprocessing) que actúa como *backend*. Recibe tareas del Servidor A y ejecuta operaciones CPU-bound (como tomar screenshots o analizar imágenes) en un pool de procesos.
 
 ---
 
-### 3.6 `server_processing.py` (stub opcional para pruebas)
+## 1. Instalación
 
-**Rol:** Un servidor B **mínimo** de prueba. Permite que la Parte A haga la llamada y reciba un `processing_data` inventado.
+Se requiere Python 3.8 o superior.
 
-**Claves técnicas:**
+### a. Entorno Virtual y Dependencias
 
-* Usa `socketserver` y un handler que **lee** un mensaje con longitud-prefijo, **parsea** JSON y **responde** con otro JSON empacado igual.
-* Es sólo para que puedas probar la coordinación A↔B. En la Parte B real implementaremos mediciones y procesamiento de imágenes.
+Se recomienda crear un entorno virtual para instalar las dependencias.
 
----
+```bash
+# Crear el entorno
+python3 -m venv env
 
-## 4) Conceptos asíncronos que estás usando
+# Activar el entorno (Linux/macOS)
+source env/bin/activate
+# (En Windows usar: env\Scripts\activate)
+```
 
-* **Event loop (`asyncio`)**: un ciclo que agenda y ejecuta tareas cooperativas. Cuando una tarea espera I/O, cede el control, y otras tareas pueden avanzar.
-* **`async def` / `await`**: funciones asíncronas y puntos de suspensión. `await` **no bloquea**; permite que el loop ejecute otras tareas mientras espera.
-* **`aiohttp.web`**: framework HTTP asíncrono. Cada request entra a un `handler` `async`, que puede `await` operaciones de red.
-* **`asyncio.create_task(...)`**: lanza una corrutina para que corra **en paralelo** (concurrencia cooperativa) dentro del mismo loop.
-* **Sockets asíncronos (`asyncio.open_connection`)**: crean `StreamReader/StreamWriter` no bloqueantes para protocolos propios.
+Crea un archivo `requirements.txt` con el siguiente contenido:
 
----
+**`requirements.txt`**
+```
+aiohttp
+beautifulsoup4
+lxml
+Pillow
+requests
+playwright
+```
 
-## 5) Protocolo A↔B (longitud-prefijo + JSON)
+Luego, instala todas las dependencias:
+```bash
+pip install -r requirements.txt
+```
 
-**Motivación:** con sockets, no sabés cuántos bytes te llegarán por `read`. Para encuadrar mensajes, mandamos primero **4 bytes big-endian** con la longitud del JSON, y luego el **JSON en bytes**.
+### b. Instalación de Navegadores (Playwright)
 
-**Enviar:** `len(payload).to_bytes(4, "big") + payload`
+El Servidor B (`processor/screenshot.py`) usa Playwright para tomar capturas de pantalla. Debes instalar el navegador (Chromium) que utiliza:
 
-**Recibir:**
-
-1. Leer 4 bytes → convertir a `int` (longitud).
-2. Leer exactamente `longitud` bytes.
-3. Decodificar con `from_json`.
-
-Esto evita concatenaciones o cortes de mensajes.
-
----
-
-## 6) Errores típicos y cómo reconocerlos
-
-* **`HTTP 4xx/5xx`**: `resp.raise_for_status()` lanza `ClientResponseError`. El servidor A devuelve 502 con el código original.
-* **Timeouts**: si el sitio tarda mucho, captura `asyncio.TimeoutError` y responde **504**.
-* **URL inválida**: `aiohttp` puede lanzar `InvalidURL`. El handler lo atrapará como excepción genérica → **500** con el mensaje.
-* **Servidor B caído**: la tarea hacia B fallará; el handler devuelve igual `scraping_data` y `processing_data` vacío.
+```bash
+playwright install chromium
+```
 
 ---
 
-## 7) Preguntas guía
+## 2. Ejecución del Sistema
 
-1. ¿Por qué `await` **no bloquea** el servidor y `time.sleep()` sí lo haría?
-2. ¿Qué ventajas trae `ClientSession` en `aiohttp` frente a `requests` tradicional?
-3. ¿Por qué conviene normalizar los links con `urljoin`? Da un ejemplo de URL relativa.
-4. ¿Cómo sabés que no se mezclan mensajes cuando A habla con B?
-5. ¿Qué responde el servidor ante `GET /scrape` **sin** `?url=`?
-6. Si el HTML no tiene `<title>`, ¿qué devuelve el parser? ¿Por qué es robusto?
+Para que el sistema funcione, debes tener **ambos servidores corriendo** al mismo tiempo en dos terminales separadas. Asegúrate de tener el entorno virtual activado en ambas.
+
+### 💻 Terminal 1: Iniciar Servidor B (Procesamiento)
+
+Este servidor escucha en un socket TCP y espera tareas.
+
+```bash
+# Escucha en 127.0.0.1, puerto 9090, con un pool de procesos
+python3 server_processing.py -i 127.0.0.1 -p 9090
+```
+*Deberías ver:* `[B] listening on 127.0.0.1:9090 (pool=...)`
+
+### 💻 Terminal 2: Iniciar Servidor A (Scraping)
+
+Este servidor escucha peticiones HTTP y se conecta al Servidor B.
+
+```bash
+# Escucha HTTP en 0.0.0.0, puerto 8000
+# Se conecta al Servidor B en 127.0.0.1:9090
+python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090
+```
+*Deberías ver:* `======== Running on http://0.0.0.0:8000 ========`
 
 ---
 
-## 8) Comandos útiles
+## 3. Ejemplo de Uso y Pruebas
 
-* Instalar deps: `pip install -r requirements.txt`
-* Levantar A: `python server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090`
-* Levantar B (stub): `python server_processing.py -i 127.0.0.1 -p 9090 -n 0`
-* Probar: `curl "http://localhost:8000/scrape?url=https://example.com"`
+Con los dos servidores corriendo, abre una **tercera terminal** (con el entorno activado) para ejecutar las pruebas de cliente.
+
+### Prueba 1: Probar Sistema Completo (Recomendado)
+
+El script `client2.py` (el cliente HTTP mejorado) prueba toda la arquitectura:
+1.  Se conecta al **Servidor A** (puerto 8000).
+2.  Le pide analizar `https://example.com`.
+3.  Imprime el JSON completo que recibe.
+4.  Decodifica y guarda la imagen `screenshot_cliente.png`.
+
+**Comando:**
+```bash
+python3 client2.py
+```
+
+**Salida Esperada:**
+```
+--- Prueba Completa: Analizando [https://example.com](https://example.com) ---
+
+--- JSON Recibido del Servidor A: ---
+{
+    "url": "[https://example.com](https://example.com)",
+    "timestamp": "...",
+    "scraping_data": { ... },
+    "processing_data": {
+        "screenshot": "iVBORw0KGgo...",
+        ...
+    },
+    "status": "success"
+}
+--------------------------------------
+
+Procesando y guardando screenshot...
+✅ ¡Imagen guardada como screenshot_cliente.png!
+```
 
 ---
 
-## 9) Próximos pasos (para la Parte B)
+### Prueba 2: Probar con `curl` (Para URLs personalizadas)
 
-* Implementar medición de performance real (tiempos, tamaños y cantidad de requests).
-* Descargar 2–3 imágenes y generar **thumbnails** con Pillow (base64).
-* Preparar **screenshot** en headless (Selenium/Playwright) activable por flag.
+Si quieres probar rápidamente con **otras URLs** sin modificar el script, puedes usar `curl`.
 
-> Con esta guía, deberías poder explicar file-by-file qué hace cada parte del sistema, cómo fluye una request y qué gana el diseño asíncrono en concurrencia y claridad.
+**Para ver solo el JSON formateado:**
+(Cambia `https://google.com` por la URL que quieras)
+```bash
+curl -s "[http://127.0.0.1:8000/scrape?url=https://google.com](http://127.0.0.1:8000/scrape?url=https://google.com)" | python3 -m json.tool
+```
+
+**Para guardar solo la imagen (sin ver el JSON):**
+(Cambia `https...` y `google.png` por lo que quieras)
+```bash
+curl -s "[http://127.0.0.1:8000/scrape?url=https://google.com](http://127.0.0.1:8000/scrape?url=https://google.com)" | python3 -c "import sys, json, base64; data=json.load(sys.stdin); img_data=base64.b64decode(data['processing_data']['screenshot']); sys.stdout.buffer.write(img_data)" > google.png && echo "✅ Imagen guardada como google.png"
+```
+
+---
+
+### Prueba 3: Probar SÓLO el Servidor B
+
+El script `client.py` original prueba la conexión directa por socket al **Servidor B** (puerto 9090).
+
+**Comando:**
+```bash
+python3 client.py
+```
+
+**Salida Esperada:**
+```
+ok ['screenshot', 'performance', 'thumbnails']
+```

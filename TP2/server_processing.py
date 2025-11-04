@@ -76,6 +76,7 @@ class Handler(socketserver.BaseRequestHandler):
 
             # Compatibilidad con tu prueba anterior
             url = req.get("url")
+            print(f"\n[Servidor B] Recibida tarea para: {url}")
             if not url:
                 raise ValueError("missing 'url' in request")
 
@@ -90,6 +91,7 @@ class Handler(socketserver.BaseRequestHandler):
             result = future.result()  # Este hilo espera, pero el CPU pesado va en procesos
 
             resp = {"status": "ok", "processing_data": result}
+            print(f"[Servidor B] Tarea completada para: {url}")
             self.request.sendall(pack_msg(to_json(resp)))
 
 
