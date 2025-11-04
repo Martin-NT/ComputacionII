@@ -84,7 +84,6 @@ Para que el sistema funcione, debes tener **ambos servidores corriendo** al mism
 python3 server_processing.py -i 127.0.0.1 -p 9090 -n 2
 ```
 - **Nota:** Si omites el `-n 2`, el servidor usará por defecto todos los núcleos de tu CPU (`mp.cpu_count()`), no del navegador.
-- **Salida esperada:** `[B] listening on 127.0.0.1:9090 (pool=2)`
 
 ### 💻 Terminal 2: Iniciar Servidor A (Scraping)
 
@@ -92,7 +91,6 @@ Este es el servidor principal que atiende a los clientes. Escucha en el puerto `
 ```bash
 python3 server_scraping.py -i 0.0.0.0 -p 8000 --proc-ip 127.0.0.1 --proc-port 9090
 ```
-- **Salida esperada:** `======== Running on http://0.0.0.0:8000 ========`
 
 ## 3. Comandos de Prueba
 
