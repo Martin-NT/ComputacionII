@@ -1,0 +1,24 @@
+# === Entornos Virtuales ===
+# Ignora la carpeta del entorno virtual
+env/
+venv/
+*.venv/
+
+# === Archivos compilados y cache de Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+
+explicacion.md
+
+# Ignora todas las imágenes
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# === Archivos de IDEs y Editores ===
+# VSCode
+.vscode/
