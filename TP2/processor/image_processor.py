@@ -1,6 +1,4 @@
-# processor/image_processor.py
 # Descarga imágenes y genera thumbnails en base64
-
 import base64, io, requests
 from PIL import Image
 from bs4 import BeautifulSoup

@@ -1,12 +1,9 @@
-# common/serialization.py
 # Conversión entre JSON ↔ bytes y soporte opcional para Pickle.
-
 from __future__ import annotations
 import json
 import pickle
 from typing import Any
 
-# --- JSON serialization (principal para TP2) ---
 def to_json(data: Any) -> bytes:
     """
     Convierte un objeto Python (dict, lista, etc.) a bytes JSON UTF-8.
@@ -20,7 +17,6 @@ def from_json(raw: bytes) -> Any:
     """
     return json.loads(raw.decode("utf-8"))
 
-# --- Pickle opcional (binario más rápido, pero menos portable) ---
 def to_pickle(data: Any) -> bytes:
     """
     Serializa cualquier objeto Python a bytes binarios (pickle).

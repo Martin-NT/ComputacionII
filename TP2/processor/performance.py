@@ -1,4 +1,3 @@
-# processor/performance.py
 # Calcula tiempos y tamaños de carga de la página
 import time
 import math

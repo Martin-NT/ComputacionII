@@ -1,4 +1,3 @@
-# scraper/html_parser.py
 # Módulo encargado de analizar (parsear) el HTML descargado.
 from __future__ import annotations
 from bs4 import BeautifulSoup       # Librería para parsear HTML de forma sencilla

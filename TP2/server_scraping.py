@@ -1,4 +1,3 @@
-# server_scraping.py - Servidor Asíncrono 
 from __future__ import annotations
 import argparse                      
 import asyncio                            
@@ -23,7 +22,7 @@ async def recv_exact(reader: asyncio.StreamReader, n: int) -> bytes:
     while len(buf) < n:
         chunk = await reader.read(n - len(buf))
         if not chunk:
-            raise ConnectionError("socket closed during recv_exact")
+            raise ConnectionError("Socket cerrado durante la recepción") # <--- CAMBIO
         buf.extend(chunk)
     return bytes(buf)
 
@@ -77,9 +76,9 @@ async def handle_scrape(request: web.Request) -> web.Response:
 
     # Validación de parámetros 
     url = request.rel_url.query.get("url")
-    print(f"\n[Servidor A] Recibida petición para: {url}")
+    print(f"\n[Servidor A] Petición recibida para: {url}") # <--- CAMBIO
     if not url:
-        return web.json_response({"status": "error", "error": "missing url"}, status=400)
+        return web.json_response({"status": "error", "error": "Falta parámetro 'url'"}, status=400) # <--- CAMBIO
     
     # Usa el semáforo guardado en la app
     async with request.app["semaphore"]:
@@ -105,7 +104,9 @@ async def handle_scrape(request: web.Request) -> web.Response:
             try:
                 proc_resp = await proc_task
                 processing_data = proc_resp.get("processing_data", {})
-            except Exception:
+            except Exception as e:
+                # <--- CAMBIO ---
+                print(f"[Servidor A] ADVERTENCIA: Falló comunicación con Servidor B para {url}. Error: {e}")
                 # Si B no está disponible, seguimos sin romper el flujo
                 processing_data = {}
 
@@ -124,10 +125,12 @@ async def handle_scrape(request: web.Request) -> web.Response:
 
         # Manejo de errores globales 
         except asyncio.TimeoutError:
-            # Si se agota el tiempo de espera
+            # <--- CAMBIO ---
+            print(f"[Servidor A] ERROR: Timeout procesando {url}")
             return web.json_response({"status": "error", "error": "timeout"}, status=504)
         except Exception as e:
-            # Cualquier otro error inesperado
+            # <--- CAMBIO ---
+            print(f"[Servidor A] ERROR: Inesperado procesando {url}. Error: {e}")
             return web.json_response({"status": "error", "error": str(e)}, status=500)
 
 
@@ -195,14 +198,24 @@ def main():
 
     args = parser.parse_args()
 
-    # Inicia la aplicación aiohttp (servidor asíncrono)
-    web.run_app(
-        make_app(args.proc_ip, args.proc_port, args.workers),
-        host=args.ip,
-        port=args.port,
-        reuse_port=True,
-    )
-
+    #print(f"\n[Servidor A] Iniciando servidor en http://{args.ip}:{args.port}")
+    print(f"\n[Servidor A] Conectando a Servidor B en {args.proc_ip}:{args.proc_port}")
+    
+    try:
+        # Inicia la aplicación aiohttp (servidor asíncrono)
+        # El mensaje "(Press CTRL+C...)" es de aiohttp
+        web.run_app(
+            make_app(args.proc_ip, args.proc_port, args.workers),
+            host=args.ip,
+            port=args.port,
+            reuse_port=True,
+            #print=None  # Ya imprime otro mensaje
+        )
+    except KeyboardInterrupt:
+        print("\n[Servidor A] Apagando... (Recibido CTRL+C)")
+    finally:
+        # Este bloque se ejecutará cuando web.run_app termine (con CTRL+C)
+        print("\n[Servidor A] Servidor detenido limpiamente.")
 
 if __name__ == "__main__":
     main()

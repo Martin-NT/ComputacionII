@@ -1,14 +1,11 @@
-# processor/screenshot.py
 # Captura de pantalla de una página web.
 # Intenta usar Playwright (Chromium headless) para obtener un screenshot real.
 # Si falla por cualquier motivo (no está instalado chromium de playwright, etc.),
 # usa un placeholder generado con Pillow.
 # Siempre devuelve un string base64 (PNG) listo para serializar en JSON.
-
 import base64
 import io
 from PIL import Image, ImageDraw
-
 
 def _placeholder_image(url: str) -> str:
     """
@@ -20,8 +17,9 @@ def _placeholder_image(url: str) -> str:
     img = Image.new("RGB", (width, height), color=(245, 247, 250))
     draw = ImageDraw.Draw(img)
 
-    draw.text((40, 40), "Screenshot Placeholder", fill=(30, 30, 30))
-    draw.text((40, 100), url, fill=(60, 60, 60))
+    draw.text((40, 40), "Placeholder de Screenshot", fill=(30, 30, 30))
+    draw.text((40, 100), f"URL: {url}", fill=(60, 60, 60))
+    
     draw.rectangle(
         [(20, 20), (width - 20, height - 20)],
         outline=(200, 200, 200),
@@ -31,7 +29,6 @@ def _placeholder_image(url: str) -> str:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("ascii")
-
 
 def _screenshot_playwright(url: str) -> bytes:
     """
@@ -61,7 +58,6 @@ def _screenshot_playwright(url: str) -> bytes:
 
     return png_bytes
 
-
 def take_screenshot(url: str) -> str:
     """
     Devuelve SIEMPRE un PNG en base64.
@@ -76,5 +72,5 @@ def take_screenshot(url: str) -> str:
         return base64.b64encode(png_bytes).decode("ascii")
 
     except Exception as e:
-        print(f"[WARN] Playwright screenshot falló, usando placeholder: {e}")
+        print(f"[ADVERTENCIA] Screenshot (Playwright) falló para {url}. Usando placeholder. Error: {e}")
         return _placeholder_image(url)

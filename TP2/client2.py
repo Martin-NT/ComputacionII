@@ -1,11 +1,8 @@
-# client2.py 
 # Cliente HTTP de prueba para el SERVIDOR A
 # Imprime el JSON completo Y guarda el screenshot.
-
 import requests
 import base64
-import sys
-import json  # Importamos json para formatear la salida
+import json 
 
 # Configuración
 SERVER_URL = "http://127.0.0.1:8000/scrape"

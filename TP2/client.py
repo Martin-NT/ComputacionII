@@ -1,4 +1,3 @@
-# client.py 
 # Cliente TCP de prueba para servidor B
 import socket
 from common.protocol import send_message, recv_message

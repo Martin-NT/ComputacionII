@@ -1,4 +1,3 @@
-# scraper/async_http.py
 # Módulo encargado de la descarga asíncrona del contenido HTML.
 from __future__ import annotations
 import aiohttp # Librería HTTP asíncrona

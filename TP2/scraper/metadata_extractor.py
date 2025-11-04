@@ -1,4 +1,3 @@
-# metadata_extractor.py
 # Encargado de extraer los metadatos relevantes de una página HTML.
 from __future__ import annotations
 from bs4 import BeautifulSoup
@@ -28,4 +27,4 @@ def extract_meta(html: str) -> dict:
         if name in RELEVANT_META and content:
             meta[name] = content
 
-    return meta # Devuelve: Un diccionario con los metadatos encontrados.
+    return meta 

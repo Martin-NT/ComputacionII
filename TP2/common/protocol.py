@@ -1,6 +1,4 @@
-# common/protocol.py
 # Implementa protocolo binario: [4 bytes longitud] + JSON
-
 import json, struct
 
 def send_message(sock, obj):
